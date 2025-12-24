@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">AreWeThereYet</string>
+    <string name="intro_icon">Are we there yet?</string>
+    <string name="the_greeting_icon_description">The greeting icon</string>
 </resources>
