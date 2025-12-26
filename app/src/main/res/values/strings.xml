@@ -44,4 +44,8 @@
         libero vel nunc consequat, quis tincidunt nisl eleifend. Cras bibendum enim a justo luctus
         vestibulum. Fusce dictum libero quis erat maximus, vitae volutpat diam dignissim.
     </string>
+    <string name="pick_vehicle_question">So what kind of vehicle are we using?</string>
+    <string name="pick_car_button">🚙 I\'m traveling in a car</string>
+    <string name="pick_train_vehicle">🚆 I\'m riding a train</string>
+    <string name="pick_no_vehicle">🦸I\'m being flown by a superhero</string>
 </resources>
