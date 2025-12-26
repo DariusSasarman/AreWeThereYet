@@ -1,6 +1,7 @@
 package com.example.arewethereyet;
 
 import android.os.Bundle;
+import android.widget.Button;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -19,6 +20,22 @@ public class PickVehicleActivity extends AppCompatActivity {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
+        });
+
+        Button car = findViewById(R.id.PickCarVehicle);
+        Button train = findViewById(R.id.pickTrainVehicle);
+        Button none = findViewById(R.id.pickNoVehicle);
+
+        car.setOnClickListener(v -> {
+
+        });
+
+        train.setOnClickListener(v-> {
+
+        });
+
+        none.setOnClickListener( v-> {
+
         });
     }
 }
