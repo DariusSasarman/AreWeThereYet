@@ -2,6 +2,7 @@ package com.example.arewethereyet;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -22,7 +23,18 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
 
-        Intent pickVehicle = new Intent(MainActivity.this,PickVehicleActivity.class);
-        startActivity(pickVehicle);
+    }
+
+    @Override
+    protected void onResume(){
+        super.onResume();
+        if(!CurrentTripTracker.getChoice().equals(Vehicle.NOTYET))
+        {
+            Toast.makeText(this, "You picked : " + CurrentTripTracker.getChoice(), Toast.LENGTH_SHORT).show();
+        }
+        else {
+            Intent pickVehicle = new Intent(MainActivity.this,PickVehicleActivity.class);
+            startActivity(pickVehicle);
+        }
     }
 }
