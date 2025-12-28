@@ -12,6 +12,9 @@ import androidx.core.view.WindowInsetsCompat;
 
 public class MainActivity extends AppCompatActivity {
 
+    State state = State.START;
+    private static Vehicle choice = Vehicle.NOTYET;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -28,13 +31,39 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume(){
         super.onResume();
-        if(!CurrentTripTracker.getChoice().equals(Vehicle.NOTYET))
+        switch (state)
         {
-            Toast.makeText(this, "You picked : " + CurrentTripTracker.getChoice(), Toast.LENGTH_SHORT).show();
+            case START:
+                state = State.PICK_VEHICLE;
+                /// Intended fall-through
+            case PICK_VEHICLE:
+                state = State.PICK_TARGET;
+                if(choice.equals(Vehicle.NOTYET))
+                {
+                    state = State.PICK_VEHICLE;
+                    Intent pickVehicle = new Intent(MainActivity.this,PickVehicleActivity.class);
+                    startActivity(pickVehicle);
+                }
+                else {
+                    Toast.makeText(this, "You picked : " + choice, Toast.LENGTH_SHORT).show();
+                }
+                break;
+            case PICK_TARGET:
+
+                break;
+            case REACHING_DESTINATION:
+
+                break;
+            case FINISHED_EXECUTION:
+
+                break;
+            default:
+                state = State.START;
+                break;
         }
-        else {
-            Intent pickVehicle = new Intent(MainActivity.this,PickVehicleActivity.class);
-            startActivity(pickVehicle);
-        }
+
+    }
+    public static void setChoice(Vehicle choice) {
+        MainActivity.choice = choice;
     }
 }

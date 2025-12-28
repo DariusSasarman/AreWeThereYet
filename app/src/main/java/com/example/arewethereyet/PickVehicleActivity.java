@@ -27,17 +27,17 @@ public class PickVehicleActivity extends AppCompatActivity {
         Button none = findViewById(R.id.pickNoVehicle);
 
         car.setOnClickListener(v -> {
-            CurrentTripTracker.setChoice(Vehicle.CAR);
+            MainActivity.setChoice(Vehicle.CAR);
             finish();
         });
 
         train.setOnClickListener(v-> {
-            CurrentTripTracker.setChoice(Vehicle.TRAIN);
+            MainActivity.setChoice(Vehicle.TRAIN);
             finish();
         });
 
         none.setOnClickListener( v-> {
-            CurrentTripTracker.setChoice(Vehicle.PLANE);
+            MainActivity.setChoice(Vehicle.PLANE);
             finish();
         });
     }
