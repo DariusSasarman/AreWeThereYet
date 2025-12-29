@@ -12,7 +12,7 @@ import androidx.core.view.WindowInsetsCompat;
 
 public class MainActivity extends AppCompatActivity {
 
-    State state = State.START;
+    private static State state = State.START;
     private static Vehicle choice = Vehicle.NOTYET;
 
     @Override
@@ -49,7 +49,9 @@ public class MainActivity extends AppCompatActivity {
                 }
                 break;
             case PICK_TARGET:
-
+                state = State.REACHING_DESTINATION;
+                Intent pickTargetLocation = new Intent(MainActivity.this, PickTargetLocationActivity.class);
+                startActivity(pickTargetLocation);
                 break;
             case REACHING_DESTINATION:
 
