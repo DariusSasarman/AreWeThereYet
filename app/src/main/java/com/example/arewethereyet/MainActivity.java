@@ -10,10 +10,14 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.google.android.gms.maps.model.LatLng;
+
 public class MainActivity extends AppCompatActivity {
 
     private static State state = State.START;
     private static Vehicle choice = Vehicle.NOTYET;
+    private static LatLng targetLocation = null;
+    private static LatLng currentLocation = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,6 +56,10 @@ public class MainActivity extends AppCompatActivity {
                 state = State.REACHING_DESTINATION;
                 Intent pickTargetLocation = new Intent(MainActivity.this, PickTargetLocationActivity.class);
                 startActivity(pickTargetLocation);
+                if(targetLocation.equals(null) || currentLocation.equals(null))
+                {
+                    state = State.PICK_TARGET;
+                }
                 break;
             case REACHING_DESTINATION:
 
@@ -68,4 +76,14 @@ public class MainActivity extends AppCompatActivity {
     public static void setChoice(Vehicle choice) {
         MainActivity.choice = choice;
     }
+
+    public static void setTargetLocation(LatLng targetLocation)
+    {
+        MainActivity.targetLocation = targetLocation;
+    }
+
+    public static void setCurrentLocation(LatLng currentLocation) {
+        MainActivity.currentLocation = currentLocation;
+    }
+
 }

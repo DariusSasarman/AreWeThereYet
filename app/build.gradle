@@ -4,6 +4,7 @@ plugins {
 
 android {
     namespace 'com.example.arewethereyet'
+    compileSdk 36
 
     defaultConfig {
         applicationId "com.example.arewethereyet"
