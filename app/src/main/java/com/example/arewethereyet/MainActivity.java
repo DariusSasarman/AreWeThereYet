@@ -18,6 +18,7 @@ public class MainActivity extends AppCompatActivity {
     private static Vehicle choice = Vehicle.NOTYET;
     private static LatLng targetLocation = null;
     private static LatLng currentLocation = null;
+    private static double ETA = 100.0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,6 +48,7 @@ public class MainActivity extends AppCompatActivity {
                 state = State.PICK_VEHICLE;
                 Intent pickVehicle = new Intent(MainActivity.this,PickVehicleActivity.class);
                 startActivity(pickVehicle);
+                recreate();
             }
             else {
                 Toast.makeText(this, "You picked : " + choice, Toast.LENGTH_SHORT).show();
@@ -57,16 +59,31 @@ public class MainActivity extends AppCompatActivity {
             state = State.REACHING_DESTINATION;
             Intent pickTargetLocation = new Intent(MainActivity.this, PickTargetLocationActivity.class);
             startActivity(pickTargetLocation);
+            if(targetLocation == null || currentLocation == null)
+            {
+                state = State.PICK_TARGET;
+                recreate();
+            }
         }
 
         if(state == State.REACHING_DESTINATION)
         {
-
+            state = State.FINISHED_EXECUTION;
+            Intent awaitReachDestination = new Intent(MainActivity.this,ReachingDestinationActivity.class);
+            startActivity(awaitReachDestination);
+            if(ETA > 10.0)
+            {
+                state = State.REACHING_DESTINATION;
+                recreate();
+            }
         }
 
         if(state == State.FINISHED_EXECUTION)
         {
-
+            state = State.START;
+            Intent callAlarm = new Intent(MainActivity.this,DestinationReachedActivity.class);
+            startActivity(callAlarm);
+            recreate();
         }
     }
     public static void setChoice(Vehicle choice) {
@@ -80,6 +97,20 @@ public class MainActivity extends AppCompatActivity {
 
     public static void setCurrentLocation(LatLng currentLocation) {
         MainActivity.currentLocation = currentLocation;
+    }
+
+    public static LatLng getTargetLocation()
+    {
+        return MainActivity.targetLocation;
+    }
+
+    public static LatLng getCurrentLocation()
+    {
+        return MainActivity.currentLocation;
+    }
+    public static void setETA(double ETA)
+    {
+        MainActivity.ETA = ETA;
     }
 
 }
