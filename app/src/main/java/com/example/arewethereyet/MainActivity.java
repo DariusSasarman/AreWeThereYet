@@ -35,43 +35,39 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume(){
         super.onResume();
-        switch (state)
+        if(state == State.START)
         {
-            case START:
+            state = State.PICK_VEHICLE;
+        }
+        if(state == State.PICK_VEHICLE)
+        {
+            state = State.PICK_TARGET;
+            if(choice.equals(Vehicle.NOTYET))
+            {
                 state = State.PICK_VEHICLE;
-                /// Intended fall-through
-            case PICK_VEHICLE:
-                state = State.PICK_TARGET;
-                if(choice.equals(Vehicle.NOTYET))
-                {
-                    state = State.PICK_VEHICLE;
-                    Intent pickVehicle = new Intent(MainActivity.this,PickVehicleActivity.class);
-                    startActivity(pickVehicle);
-                }
-                else {
-                    Toast.makeText(this, "You picked : " + choice, Toast.LENGTH_SHORT).show();
-                }
-                break;
-            case PICK_TARGET:
-                state = State.REACHING_DESTINATION;
-                Intent pickTargetLocation = new Intent(MainActivity.this, PickTargetLocationActivity.class);
-                startActivity(pickTargetLocation);
-                if(targetLocation.equals(null) || currentLocation.equals(null))
-                {
-                    state = State.PICK_TARGET;
-                }
-                break;
-            case REACHING_DESTINATION:
-
-                break;
-            case FINISHED_EXECUTION:
-
-                break;
-            default:
-                state = State.START;
-                break;
+                Intent pickVehicle = new Intent(MainActivity.this,PickVehicleActivity.class);
+                startActivity(pickVehicle);
+            }
+            else {
+                Toast.makeText(this, "You picked : " + choice, Toast.LENGTH_SHORT).show();
+            }
+        }
+        if(state == State.PICK_TARGET)
+        {
+            state = State.REACHING_DESTINATION;
+            Intent pickTargetLocation = new Intent(MainActivity.this, PickTargetLocationActivity.class);
+            startActivity(pickTargetLocation);
         }
 
+        if(state == State.REACHING_DESTINATION)
+        {
+
+        }
+
+        if(state == State.FINISHED_EXECUTION)
+        {
+
+        }
     }
     public static void setChoice(Vehicle choice) {
         MainActivity.choice = choice;
