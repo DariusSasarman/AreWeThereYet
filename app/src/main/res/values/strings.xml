@@ -13,4 +13,5 @@
     <string name="pick_car_button">🚙 I\'m traveling in a car</string>
     <string name="pick_train_vehicle">🚆 I\'m riding a train</string>
     <string name="pick_no_vehicle">🦸I\'m being flown by a superhero</string>
+    <string name="select_target_location_button">Let\'s Go! 🚀</string>
 </resources>
