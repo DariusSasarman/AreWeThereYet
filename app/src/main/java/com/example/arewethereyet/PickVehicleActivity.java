@@ -37,7 +37,7 @@ public class PickVehicleActivity extends AppCompatActivity {
         });
 
         none.setOnClickListener( v-> {
-            MainActivity.setChoice(Vehicle.PLANE);
+            MainActivity.setChoice(Vehicle.NONE);
             finish();
         });
     }

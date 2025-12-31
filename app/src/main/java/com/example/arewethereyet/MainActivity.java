@@ -15,7 +15,7 @@ import com.google.android.gms.maps.model.LatLng;
 public class MainActivity extends AppCompatActivity {
 
     private static State state = State.START;
-    private static Vehicle choice = Vehicle.NOTYET;
+    private static Vehicle choice = Vehicle.NOT_YET;
     private static LatLng targetLocation = null;
 
     private static long lastTimeCurrentLocation = System.currentTimeMillis();
@@ -46,7 +46,7 @@ public class MainActivity extends AppCompatActivity {
         if(state == State.PICK_VEHICLE)
         {
             state = State.PICK_TARGET;
-            if(choice.equals(Vehicle.NOTYET))
+            if(choice.equals(Vehicle.NOT_YET))
             {
                 state = State.PICK_VEHICLE;
                 Intent pickVehicle = new Intent(MainActivity.this,PickVehicleActivity.class);
@@ -110,6 +110,11 @@ public class MainActivity extends AppCompatActivity {
     public static void setETA(double ETA)
     {
         MainActivity.ETA = ETA;
+    }
+
+
+    public static Vehicle getChoice() {
+        return choice;
     }
 
     public static long getLastTimeCurrentLocation() {

@@ -18,4 +18,6 @@
     <string name="distance">Distance: --</string>
     <string name="eta">ETA: --</string>
     <string name="progress">Progress: -- %</string>
+    <string name="finish_reaching">Finish</string>
+    <string name="pause_check">Pause</string>
 </resources>
