@@ -10,7 +10,7 @@ A **mobile application** designed to **alert you** when you're **approaching you
 ## How does it work?
 The application uses **real-time GPS tracking** to monitor your **journey progress**. Here's the flow:
 
-- **Pick your vehicle** - Choose whether you're traveling by car, train, or on foot
+- **Pick your vehicle** - Choose whether you're traveling by car, train, or by whatever you're using.
 - **Set your destination** - Use the integrated Google Maps search to find your target location
 - **Relax and travel** - The app continuously tracks your position and calculates your ETA
 - **Get alerted** - When you're within **10 minutes** of your destination, an **alarm sounds** to wake you up or grab your attention
@@ -32,11 +32,11 @@ For the alarm system, I used **MediaPlayer** with the **AudioManager** to play t
 The app doesn't just use static speed estimates. It employs a **dynamic ETA algorithm** that:
 
 - **Tracks your actual movement speed** by comparing consecutive GPS positions
-- **Adapts to your vehicle type** - Uses default speeds (car: ~50 km/h, train: ~36 km/h, walking: ~5 km/h) until real movement data is available
+- **Adapts to your vehicle type** - Uses default speeds (car: ~50 km/h, train: ~36 km/h, traveling: ~5 km/h) until real movement data is available
 - **Continuously recalculates** your estimated arrival time based on your current speed
 - **Updates progress percentage** by comparing distance traveled vs. total journey distance
 
-This means the ETA becomes **more accurate** as you travel, adapting to traffic conditions, train speeds, or your walking pace.
+This means the ETA becomes **more accurate** as you travel, adapting to traffic conditions, train speeds, or your traveling pace.
 
 ## State machine architecture
 The application is built around a **finite state machine** with five distinct states:
