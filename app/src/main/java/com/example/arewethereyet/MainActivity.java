@@ -17,7 +17,7 @@ public class MainActivity extends AppCompatActivity {
     private static State state = State.START;
     private static Vehicle choice = Vehicle.NOT_YET;
     private static LatLng targetLocation = null;
-    private static LatLng initialLocation = null; // Store starting location
+    private static LatLng initialLocation = null;
 
     private static long lastTimeCurrentLocation = System.currentTimeMillis();
     private static LatLng currentLocation = null;
@@ -38,53 +38,66 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume(){
         super.onResume();
-        if(state == State.START)
-        {
+
+        // Handle state transitions one at a time
+        if(state == State.START) {
             state = State.PICK_VEHICLE;
+            Intent pickVehicle = new Intent(MainActivity.this, PickVehicleActivity.class);
+            startActivity(pickVehicle);
+            return; // Exit early to prevent multiple transitions
         }
-        if(state == State.PICK_VEHICLE)
-        {
-            state = State.PICK_TARGET;
-            if(choice.equals(Vehicle.NOT_YET))
-            {
-                state = State.PICK_VEHICLE;
-                Intent pickVehicle = new Intent(MainActivity.this,PickVehicleActivity.class);
+
+        if(state == State.PICK_VEHICLE) {
+            if(choice.equals(Vehicle.NOT_YET)) {
+                // Still waiting for vehicle selection
+                Intent pickVehicle = new Intent(MainActivity.this, PickVehicleActivity.class);
                 startActivity(pickVehicle);
-                recreate();
-            }
-            else {
-                Toast.makeText(this, "You picked : " + choice, Toast.LENGTH_SHORT).show();
-            }
-        }
-        if(state == State.PICK_TARGET)
-        {
-            state = State.REACHING_DESTINATION;
-            Intent pickTargetLocation = new Intent(MainActivity.this, PickTargetLocationActivity.class);
-            startActivity(pickTargetLocation);
-            if(targetLocation == null || currentLocation == null)
-            {
+                return;
+            } else {
+                // Vehicle selected, move to next state
+                Toast.makeText(this, "You picked: " + choice, Toast.LENGTH_SHORT).show();
                 state = State.PICK_TARGET;
-                recreate();
+                Intent pickTargetLocation = new Intent(MainActivity.this, PickTargetLocationActivity.class);
+                startActivity(pickTargetLocation);
+                return;
             }
-            else {
-                // Store initial location when journey starts
+        }
+
+        if(state == State.PICK_TARGET) {
+            if(targetLocation == null || currentLocation == null) {
+                // Still waiting for location selection
+                Intent pickTargetLocation = new Intent(MainActivity.this, PickTargetLocationActivity.class);
+                startActivity(pickTargetLocation);
+                return;
+            } else {
+                // Location selected, store initial location and start tracking
                 initialLocation = currentLocation;
+                state = State.REACHING_DESTINATION;
+                Intent awaitReachDestination = new Intent(MainActivity.this, ReachingDestinationActivity.class);
+                startActivity(awaitReachDestination);
+                return;
             }
         }
 
-        if(state == State.REACHING_DESTINATION)
-        {
-            state = State.FINISHED_EXECUTION;
-            Intent awaitReachDestination = new Intent(MainActivity.this,ReachingDestinationActivity.class);
-            startActivity(awaitReachDestination);
+        if(state == State.REACHING_DESTINATION) {
+            // We're in tracking mode - only launch the activity if it's not already running
+            // This prevents re-launching when coming back from other activities
+            return;
         }
 
-        if(state == State.FINISHED_EXECUTION)
-        {
+        if(state == State.FINISHED_EXECUTION) {
+            // Reset state immediately to prevent loop
             state = State.START;
-            Intent callAlarm = new Intent(MainActivity.this,DestinationReachedActivity.class);
+            choice = Vehicle.NOT_YET;
+            targetLocation = null;
+            initialLocation = null;
+            currentLocation = null;
+            ETA = 100.0;
+
+            // Then show completion screen
+            Intent callAlarm = new Intent(MainActivity.this, DestinationReachedActivity.class);
             startActivity(callAlarm);
-            recreate();
+            return;
         }
     }
 
@@ -129,7 +142,6 @@ public class MainActivity extends AppCompatActivity {
         lastTimeCurrentLocation = System.currentTimeMillis();
     }
 
-    // Calculate distance to target in kilometers
     public static Double getDistanceKm() {
         if (currentLocation == null || targetLocation == null) {
             return null;
@@ -140,10 +152,9 @@ public class MainActivity extends AppCompatActivity {
                 targetLocation.latitude, targetLocation.longitude,
                 result
         );
-        return result[0] / 1000.0; // Convert meters to km
+        return result[0] / 1000.0;
     }
 
-    // Calculate progress percentage
     public static Double getProgressPercent() {
         if (currentLocation == null || targetLocation == null || initialLocation == null) {
             return null;
@@ -171,7 +182,6 @@ public class MainActivity extends AppCompatActivity {
         return Math.max(0, Math.min(100, (traveled / totalDistance[0]) * 100.0));
     }
 
-    // Trigger state transition when destination reached
     public static void onDestinationReached() {
         state = State.FINISHED_EXECUTION;
     }

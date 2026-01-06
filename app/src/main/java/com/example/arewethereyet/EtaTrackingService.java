@@ -9,6 +9,9 @@ import android.app.Service;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.media.AudioAttributes;
+import android.media.AudioManager;
+import android.media.MediaPlayer;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.net.Uri;
@@ -42,7 +45,7 @@ public class EtaTrackingService extends Service {
     private LocationCallback locationCallback;
     private Handler handler;
     private boolean alarmPlayed = false;
-    private Ringtone ringtone;
+    private MediaPlayer mediaPlayer;
 
     private LatLng prevLocation = null;
     private long prevTime = 0;
@@ -132,11 +135,22 @@ public class EtaTrackingService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        // Check if this is a stop command from DestinationReachedActivity
-        if (intent != null && "STOP_ALARM".equals(intent.getAction())) {
-            stopAlarm();
-            stopSelf();
-            return START_NOT_STICKY;
+        if (intent != null) {
+            String action = intent.getAction();
+
+            if ("STOP_ALARM".equals(action)) {
+                // Stop the alarm and service
+                stopAlarm();
+                stopSelf();
+                return START_NOT_STICKY;
+            } else if ("TRIGGER_ALARM".equals(action)) {
+                // Manually trigger the alarm (from Finish button)
+                if (!alarmPlayed) {
+                    alarmPlayed = true;
+                    playAlarm();
+                }
+                return START_STICKY;
+            }
         }
         return START_STICKY;
     }
@@ -200,19 +214,83 @@ public class EtaTrackingService extends Service {
     /* ---------------- Alarm ---------------- */
 
     private void playAlarm() {
-        Uri uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM);
-        if (uri == null)
-            uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+        try {
+            // Get the alarm URI
+            Uri alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM);
+            if (alarmUri == null) {
+                alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+            }
+            if (alarmUri == null) {
+                alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
+            }
 
-        ringtone = RingtoneManager.getRingtone(getApplicationContext(), uri);
-        if (ringtone != null) {
-            ringtone.play();
+            // Release any existing MediaPlayer
+            if (mediaPlayer != null) {
+                mediaPlayer.release();
+            }
+
+            // Create and configure MediaPlayer
+            mediaPlayer = new MediaPlayer();
+            mediaPlayer.setDataSource(getApplicationContext(), alarmUri);
+
+            // Use ALARM audio stream
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                AudioAttributes audioAttributes = new AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_ALARM)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                        .build();
+                mediaPlayer.setAudioAttributes(audioAttributes);
+            } else {
+                mediaPlayer.setAudioStreamType(AudioManager.STREAM_ALARM);
+            }
+
+            // Set to loop continuously
+            mediaPlayer.setLooping(true);
+
+            // Prepare and start
+            mediaPlayer.prepare();
+            mediaPlayer.start();
+
+            // Also set the volume to max for alarm stream
+            AudioManager audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
+            if (audioManager != null) {
+                int maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_ALARM);
+                int currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_ALARM);
+
+                // If volume is too low, notify but don't change it (user preference)
+                if (currentVolume < maxVolume / 3) {
+                    // Volume is quite low, but we respect user settings
+                }
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            // Fallback: try using Ringtone instead
+            try {
+                Uri uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM);
+                if (uri == null) {
+                    uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+                }
+                Ringtone ringtone = RingtoneManager.getRingtone(getApplicationContext(), uri);
+                if (ringtone != null) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                        ringtone.setLooping(true);
+                    }
+                    ringtone.play();
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
         }
     }
 
     private void stopAlarm() {
-        if (ringtone != null && ringtone.isPlaying()) {
-            ringtone.stop();
+        if (mediaPlayer != null) {
+            if (mediaPlayer.isPlaying()) {
+                mediaPlayer.stop();
+            }
+            mediaPlayer.release();
+            mediaPlayer = null;
         }
     }
 
