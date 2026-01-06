@@ -43,6 +43,7 @@ public class PickTargetLocationActivity extends AppCompatActivity implements OnM
     private com.google.android.gms.maps.model.Marker mainMarker;
 
     private static final String MAP_VIEW_BUNDLE_KEY = "MapViewBundleKey";
+    private static final int LOCATION_PERMISSION_REQUEST_CODE = 1001;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -91,10 +92,26 @@ public class PickTargetLocationActivity extends AppCompatActivity implements OnM
             }
         });
 
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, 1001);
+        // Request location permissions if not granted
+        checkAndRequestLocationPermissions();
+    }
+
+    private void checkAndRequestLocationPermissions() {
+        String[] permissions = new String[] {
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+        };
+
+        boolean allGranted = true;
+        for (String permission : permissions) {
+            if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
+                allGranted = false;
+                break;
+            }
+        }
+
+        if (!allGranted) {
+            ActivityCompat.requestPermissions(this, permissions, LOCATION_PERMISSION_REQUEST_CODE);
         }
     }
 
@@ -106,8 +123,8 @@ public class PickTargetLocationActivity extends AppCompatActivity implements OnM
     }
 
     private void getCurrentLocation() {
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
-                == PackageManager.PERMISSION_GRANTED) {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+                || ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
 
             fusedLocationClient.getLastLocation().addOnSuccessListener(this, location -> {
                 if (location != null) {
@@ -120,6 +137,8 @@ public class PickTargetLocationActivity extends AppCompatActivity implements OnM
                     Toast.makeText(this, "Unable to get current location", Toast.LENGTH_SHORT).show();
                 }
             });
+        } else {
+            Toast.makeText(this, "Location permission is required", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -152,11 +171,19 @@ public class PickTargetLocationActivity extends AppCompatActivity implements OnM
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == 1001) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
+            boolean anyGranted = false;
+            for (int result : grantResults) {
+                if (result == PackageManager.PERMISSION_GRANTED) {
+                    anyGranted = true;
+                    break;
+                }
+            }
+
+            if (anyGranted) {
                 getCurrentLocation();
             } else {
-                Toast.makeText(this, "Location permission denied", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Location permission denied - you can still search for locations manually", Toast.LENGTH_LONG).show();
             }
         }
     }
