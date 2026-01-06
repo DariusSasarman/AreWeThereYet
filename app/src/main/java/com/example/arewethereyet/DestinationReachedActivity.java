@@ -1,5 +1,6 @@
 package com.example.arewethereyet;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
 
@@ -27,7 +28,13 @@ public class DestinationReachedActivity extends AppCompatActivity {
         // Find the button and set its click listener
         Button buttonThankYou = findViewById(R.id.buttonThankYou);
         buttonThankYou.setOnClickListener(v -> {
-            finish(); // This closes the activity
+            // CRITICAL: Stop the alarm by sending stop command to service
+            Intent stopIntent = new Intent(this, EtaTrackingService.class);
+            stopIntent.setAction("STOP_ALARM");
+            startService(stopIntent);
+
+            // Close this activity
+            finish();
         });
     }
 }

@@ -17,11 +17,11 @@ public class MainActivity extends AppCompatActivity {
     private static State state = State.START;
     private static Vehicle choice = Vehicle.NOT_YET;
     private static LatLng targetLocation = null;
+    private static LatLng initialLocation = null; // Store starting location
 
     private static long lastTimeCurrentLocation = System.currentTimeMillis();
     private static LatLng currentLocation = null;
     private static double ETA = 100.0;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,7 +33,6 @@ public class MainActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
-
     }
 
     @Override
@@ -67,6 +66,10 @@ public class MainActivity extends AppCompatActivity {
                 state = State.PICK_TARGET;
                 recreate();
             }
+            else {
+                // Store initial location when journey starts
+                initialLocation = currentLocation;
+            }
         }
 
         if(state == State.REACHING_DESTINATION)
@@ -84,12 +87,12 @@ public class MainActivity extends AppCompatActivity {
             recreate();
         }
     }
+
     public static void setChoice(Vehicle choice) {
         MainActivity.choice = choice;
     }
 
-    public static void setTargetLocation(LatLng targetLocation)
-    {
+    public static void setTargetLocation(LatLng targetLocation) {
         MainActivity.targetLocation = targetLocation;
     }
 
@@ -98,20 +101,21 @@ public class MainActivity extends AppCompatActivity {
         updateLastTimeCurrentLocation();
     }
 
-    public static LatLng getTargetLocation()
-    {
+    public static LatLng getTargetLocation() {
         return MainActivity.targetLocation;
     }
 
-    public static LatLng getCurrentLocation()
-    {
+    public static LatLng getCurrentLocation() {
         return MainActivity.currentLocation;
     }
-    public static void setETA(double ETA)
-    {
+
+    public static void setETA(double ETA) {
         MainActivity.ETA = ETA;
     }
 
+    public static Double getETA() {
+        return ETA;
+    }
 
     public static Vehicle getChoice() {
         return choice;
@@ -121,10 +125,58 @@ public class MainActivity extends AppCompatActivity {
         return lastTimeCurrentLocation;
     }
 
-    public static void updateLastTimeCurrentLocation()
-    {
+    public static void updateLastTimeCurrentLocation() {
         lastTimeCurrentLocation = System.currentTimeMillis();
     }
 
+    // Calculate distance to target in kilometers
+    public static Double getDistanceKm() {
+        if (currentLocation == null || targetLocation == null) {
+            return null;
+        }
+        float[] result = new float[1];
+        android.location.Location.distanceBetween(
+                currentLocation.latitude, currentLocation.longitude,
+                targetLocation.latitude, targetLocation.longitude,
+                result
+        );
+        return result[0] / 1000.0; // Convert meters to km
+    }
 
+    // Calculate progress percentage
+    public static Double getProgressPercent() {
+        if (currentLocation == null || targetLocation == null || initialLocation == null) {
+            return null;
+        }
+
+        float[] totalDistance = new float[1];
+        android.location.Location.distanceBetween(
+                initialLocation.latitude, initialLocation.longitude,
+                targetLocation.latitude, targetLocation.longitude,
+                totalDistance
+        );
+
+        float[] remainingDistance = new float[1];
+        android.location.Location.distanceBetween(
+                currentLocation.latitude, currentLocation.longitude,
+                targetLocation.latitude, targetLocation.longitude,
+                remainingDistance
+        );
+
+        if (totalDistance[0] == 0) {
+            return 100.0;
+        }
+
+        double traveled = totalDistance[0] - remainingDistance[0];
+        return Math.max(0, Math.min(100, (traveled / totalDistance[0]) * 100.0));
+    }
+
+    // Trigger state transition when destination reached
+    public static void onDestinationReached() {
+        state = State.FINISHED_EXECUTION;
+    }
+
+    public static State getState() {
+        return state;
+    }
 }
