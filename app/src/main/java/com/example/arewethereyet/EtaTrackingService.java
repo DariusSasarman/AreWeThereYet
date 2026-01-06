@@ -1,11 +1,14 @@
 package com.example.arewethereyet;
 
+import android.Manifest;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.location.Location;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.net.Uri;
@@ -15,8 +18,15 @@ import android.os.IBinder;
 import android.os.Looper;
 
 import androidx.annotation.Nullable;
+import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.Priority;
 import com.google.android.gms.maps.model.LatLng;
 
 public class EtaTrackingService extends Service {
@@ -24,63 +34,100 @@ public class EtaTrackingService extends Service {
     private static final String CHANNEL_ID = "eta_tracking";
     private static final int NOTIFICATION_ID = 1;
 
-    private static final long CHECK_INTERVAL_MS = 20_000; // Check every 20 seconds
+    private static final long LOCATION_UPDATE_INTERVAL_MS = 5_000; // Request location every 5 seconds
+    private static final long FASTEST_INTERVAL_MS = 3_000; // Fastest update rate
     private static final double ETA_THRESHOLD_MIN = 10.0; // Alert at 10 minutes
 
+    private FusedLocationProviderClient fusedLocationClient;
+    private LocationCallback locationCallback;
     private Handler handler;
     private boolean alarmPlayed = false;
     private Ringtone ringtone;
 
     private LatLng prevLocation = null;
     private long prevTime = 0;
-
-    private final Runnable checker = new Runnable() {
-        @Override
-        public void run() {
-            LatLng current = MainActivity.getCurrentLocation();
-            LatLng target = MainActivity.getTargetLocation();
-
-            if (current != null && target != null && !alarmPlayed) {
-                double eta = estimateEtaMinutesDynamic(current, target);
-
-                // Update shared state so UI can read it
-                MainActivity.setETA(eta);
-
-                // Update notification with current ETA
-                updateNotification(eta);
-
-                if (eta <= ETA_THRESHOLD_MIN) {
-                    alarmPlayed = true;
-                    playAlarm();
-
-                    // Trigger state transition
-                    MainActivity.onDestinationReached();
-
-                    // Launch DestinationReachedActivity where user can dismiss alarm
-                    Intent alarmIntent = new Intent(EtaTrackingService.this, DestinationReachedActivity.class);
-                    alarmIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                    startActivity(alarmIntent);
-
-                    // Keep service running until user dismisses from DestinationReachedActivity
-                    return;
-                }
-            }
-
-            // Continue checking
-            handler.postDelayed(this, CHECK_INTERVAL_MS);
-        }
-    };
+    private LatLng currentTrackedLocation = null;
 
     @Override
     public void onCreate() {
         super.onCreate();
 
         handler = new Handler(Looper.getMainLooper());
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
         createNotificationChannel();
         startForeground(NOTIFICATION_ID, buildNotification(null));
 
-        handler.post(checker);
+        setupLocationTracking();
+    }
+
+    private void setupLocationTracking() {
+        // Create location request
+        LocationRequest locationRequest = new LocationRequest.Builder(
+                Priority.PRIORITY_HIGH_ACCURACY,
+                LOCATION_UPDATE_INTERVAL_MS
+        )
+                .setMinUpdateIntervalMillis(FASTEST_INTERVAL_MS)
+                .build();
+
+        // Create location callback
+        locationCallback = new LocationCallback() {
+            @Override
+            public void onLocationResult(LocationResult locationResult) {
+                if (locationResult == null) {
+                    return;
+                }
+
+                Location location = locationResult.getLastLocation();
+                if (location != null) {
+                    onLocationUpdate(location);
+                }
+            }
+        };
+
+        // Start location updates
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+                || ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+
+            fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper());
+        }
+    }
+
+    private void onLocationUpdate(Location location) {
+        currentTrackedLocation = new LatLng(location.getLatitude(), location.getLongitude());
+
+        // Update MainActivity's current location
+        MainActivity.setCurrentLocation(currentTrackedLocation);
+
+        // Check if we should trigger the alarm
+        checkDestinationProximity();
+    }
+
+    private void checkDestinationProximity() {
+        LatLng target = MainActivity.getTargetLocation();
+
+        if (currentTrackedLocation != null && target != null && !alarmPlayed) {
+            double eta = estimateEtaMinutesDynamic(currentTrackedLocation, target);
+
+            // Update shared state so UI can read it
+            MainActivity.setETA(eta);
+
+            // Update notification with current ETA
+            updateNotification(eta);
+
+            if (eta <= ETA_THRESHOLD_MIN) {
+                alarmPlayed = true;
+                playAlarm();
+
+                // Trigger state transition
+                MainActivity.onDestinationReached();
+
+                // Launch DestinationReachedActivity where user can dismiss alarm
+                Intent alarmIntent = new Intent(EtaTrackingService.this, DestinationReachedActivity.class);
+                alarmIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                startActivity(alarmIntent);
+            }
+        }
     }
 
     @Override
@@ -96,7 +143,13 @@ public class EtaTrackingService extends Service {
 
     @Override
     public void onDestroy() {
-        handler.removeCallbacks(checker);
+        // Stop location updates
+        if (fusedLocationClient != null && locationCallback != null) {
+            fusedLocationClient.removeLocationUpdates(locationCallback);
+        }
+        if (handler != null) {
+            handler.removeCallbacksAndMessages(null);
+        }
         stopAlarm();
         super.onDestroy();
     }
