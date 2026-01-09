@@ -3,9 +3,15 @@
 ## What is it?
 A **mobile application** designed to **alert you** when you're **approaching your destination**. No more missing your stop on the train, no more constantly checking maps while someone else is driving, no more anxious "are we there yet?" moments.
 
-## Here's a video of it working : 
+## Here's a video of it working (Live test) : 
 
-(TODO : Record a video of it.)
+During the recording of this video, I was actually moving between the two points.
+
+### (Sound warning!)
+
+[demo.webm](https://github.com/user-attachments/assets/630acf11-0420-4130-a872-53f768420f65)
+
+The alarm is triggered based on minutes left - not based on percentage.
 
 ## How does it work?
 The application uses **real-time GPS tracking** to monitor your **journey progress**. Here's the flow:
