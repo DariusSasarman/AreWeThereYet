@@ -88,3 +88,5 @@ All data is synchronized through **static accessors** in MainActivity, allowing 
 - **Separate activities** for each major state create clear user flow
 - **Service lifecycle management** properly handles start/stop/destroy scenarios
 - **Notification updates** keep user informed even when app is backgrounded
+
+<sub> Disclaimer! The current state of this project is "vibe-coded", as in "requested the lego pieces and put it all together" vibe-coding. I had this ideea and I wanted it implemented asap.</sub>
